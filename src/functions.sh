@@ -3,8 +3,11 @@ fns_convert() {
 
   local input="$1"
 
-  local enToRu
-  declare -A enToRu=(
+  fns_convert_result_output=""
+  fns_convert_result_switch=false
+
+  local us_to_ru
+  declare -A us_to_ru=(
     ["q"]="й" ["w"]="ц" ["e"]="у" ["r"]="к" ["t"]="е"
     ["y"]="н" ["u"]="г" ["i"]="ш" ["o"]="щ" ["p"]="з"
     ["["]="х" ["]"]="ъ" ["a"]="ф" ["s"]="ы" ["d"]="в"
@@ -19,11 +22,11 @@ fns_convert() {
     [":"]="Ж" ['"']="Э" ["Z"]="Я" ["X"]="Ч" ["C"]="С" ["V"]="М"
     ["B"]="И" ["N"]="Т" ["M"]="Ь" ["<"]="Б" [">"]="Ю" ["~"]="Ё"
 
-    ['?']="," ['/']="." ['&']="?" ['^']=":" ['$']=";" ['#']="№" ['@']='"'
+    ["?"]="," ["/"]="." ["&"]="?" ["^"]=":" ["$"]=";" ["#"]="№" ["@"]='"'
   )
 
-  local ruToEn
-  declare -A ruToEn=(
+  local ru_to_us
+  declare -A ru_to_us=(
     ["й"]="q" ["ц"]="w" ["у"]="e" ["к"]="r" ["е"]="t"
     ["н"]="y" ["г"]="u" ["ш"]="i" ["щ"]="o" ["з"]="p"
     ["х"]="[" ["ъ"]="]" ["ф"]="a" ["ы"]="s" ["в"]="d"
@@ -38,53 +41,254 @@ fns_convert() {
     ["Ж"]=":" ["Э"]='"' ["Я"]="Z" ["Ч"]="X" ["С"]="C" ["М"]="V"
     ["И"]="B" ["Т"]="N" ["Ь"]="M" ["Б"]="<" ["Ю"]=">" ["Ё"]="~"
 
-    [","]="?" ["№"]="#"
+    [","]="?" ["№"]="#" ['"']="@"
   )
 
-  local fromTo
-  fromTo="$(xset -q | grep "Group 2" | awk '{print $4}' | sed 's/on/ruToEn/g; s/off/enToRu/g')"
+  local current_lng
+  current_lng="$(fns_get_current_lng)_lng"
 
-  local output=""
-  local newChar
-  local i=0
-  for (( ; i<${#input}; i++ )); do
+  local count_ru=0
+  local count_us=0
+
+  local i
+  for (( i=0; i<${#input}; i++ )); do
+
     local char="${input:$i:1}"
 
-    if [[ "$fromTo" == "enToRu" && -n "${enToRu[$char]}" ]]; then
-        newChar="${enToRu[$char]}"
-    elif [[ "$fromTo" == "ruToEn" && -n "${ruToEn[$char]}" ]]; then
-        newChar="${ruToEn[$char]}"
+    if [[ "$current_lng" == "us_lng" ]]; then
+      if [[ -n "${ru_to_us[$char]}" ]]; then
+        count_ru=$((count_ru + 1))
+      elif [[ -n "${us_to_ru[$char]}" ]]; then
+        count_us=$((count_us + 1))
+      fi
     else
-        newChar="$char"
+      if [[ -n "${us_to_ru[$char]}" ]]; then
+        count_us=$((count_us + 1))
+      elif [[ -n "${ru_to_us[$char]}" ]]; then
+        count_ru=$((count_ru + 1))
+      fi
     fi
 
-    output+="$newChar"
   done
 
-  echo "$output"
+  local switch_lng_to="$current_lng"
+
+  local new_char
+  local i
+  for (( i=0; i<${#input}; i++ )); do
+
+    local char="${input:$i:1}"
+
+    if [[ "$count_ru" -gt "$count_us" && "$count_ru" -gt 1 ]]; then
+      if [[ -n "${ru_to_us[$char]}" ]]; then
+          new_char="${ru_to_us[$char]}"
+          switch_lng_to="us_lng"
+      else
+          new_char="$char"
+      fi
+    elif [[ "$count_us" -gt "$count_ru" && "$count_us" -gt 1 ]]; then
+      if [[ -n "${us_to_ru[$char]}" ]]; then
+          new_char="${us_to_ru[$char]}"
+          switch_lng_to="ru_lng"
+      else
+          new_char="$char"
+      fi
+    else
+      if [[ "$current_lng" == "us_lng" && -n "${us_to_ru[$char]}" ]]; then
+          new_char="${us_to_ru[$char]}"
+          switch_lng_to="ru_lng"
+      elif [[ "$current_lng" == "ru_lng" && -n "${ru_to_us[$char]}" ]]; then
+          new_char="${ru_to_us[$char]}"
+          switch_lng_to="us_lng"
+      else
+          new_char="$char"
+      fi
+    fi
+
+    fns_convert_result_output+="$new_char"
+
+  done
+
+  if [[ "$switch_lng_to" != "$current_lng" ]]; then
+    fns_convert_result_switch=true
+  fi
 }
 
-fns_get_terminal_processed_string() {
+fns_switch_last() {
 
-  local string="$1"
+  if [[ "$(fns_is_gnome_terminal)" == true ]]; then
+    fns_switch_last_gnome_terminal
+  else
+    fns_switch_last_common
+  fi
 
-  local stringExplode
-  IFS=' ' read -ra stringExplode <<< "$string"
-
-  unset 'stringExplode[0]'
-  echo "$(IFS=' '; echo "${stringExplode[*]}")"
+  if [[ "$fns_convert_result_switch" == true ]]; then
+    xdotool key Mode_switch
+  fi
 }
 
-fns_get_processed_string() {
+fns_switch_last_common() {
+
+  local saved_clipboard
+  saved_clipboard=$(xsel -ob)
+
+  xte "keydown Shift_L" "key Home" "keyup Shift_L"
+  sleep 0.05
+  xte "keydown Control_L" "key c" "keyup Control_L"
+  sleep 0.05
+
+  fns_get_divided_string "$(xsel -ob)"
+
+  fns_convert "$fns_get_divided_string_result_s2"
+  echo -n "$fns_get_divided_string_result_s1$fns_convert_result_output" | xsel -ib
+
+  xte "keydown Control_L" "key v" "keyup Control_L"
+  sleep 0.2
+
+  echo -n "$saved_clipboard" | xsel -ib
+}
+
+fns_switch_last_gnome_terminal() {
+
+  local saved_clipboard
+  saved_clipboard=$(xsel -ob)
+
+  fns_get_divided_string "$(fns_get_gnome_terminal_string)"
+  fns_convert "$fns_get_divided_string_result_s2"
+  echo -n "$fns_get_divided_string_result_s1$fns_convert_result_output" | xsel -ib
+  fns_paste_to_gnome_terminal
+
+  echo -n "$saved_clipboard" | xsel -ib
+}
+
+fns_switch_selected() {
+
+  if [[ "$(fns_is_gnome_terminal)" == true ]]; then
+    fns_switch_selected_gnome_terminal
+  else
+    fns_switch_selected_common
+  fi
+
+  if [[ "$fns_convert_result_switch" == true ]]; then
+    xdotool key Mode_switch
+  fi
+}
+
+fns_switch_selected_common() {
+
+  local saved_clipboard
+  saved_clipboard=$(xsel -ob)
+
+  sleep 0.15
+  xte "keydown Control_L" "key c" "keyup Control_L"
+  sleep 0.15
+  fns_convert "$(xsel -ob)"
+  echo -n "$fns_convert_result_output" | xsel -ib
+  sleep 0.2
+  xte "keydown Control_L" "key v" "keyup Control_L"
+  sleep 0.2
+
+  echo -n "$saved_clipboard" | xsel -ib
+}
+
+fns_switch_selected_gnome_terminal() {
+
+  local saved_clipboard
+  saved_clipboard=$(xsel -ob)
+
+  sleep 0.2
+  xte "keydown Control_L" "keydown Shift_L" "key c" "keyup Shift_L" "keyup Control_L"
+  sleep 0.2
+
+  local for_convert
+  for_convert=$(xsel -ob)
+
+  local terminal_string
+  terminal_string=$(fns_get_gnome_terminal_string true)
+
+  fns_convert "$for_convert"
+
+  local result
+  result=${terminal_string//"$for_convert"/"$fns_convert_result_output"}
+
+  echo -n "$result" | xsel -ib
+  fns_paste_to_gnome_terminal
+
+  sleep 0.2
+
+  echo -n "$saved_clipboard" | xsel -ib
+}
+
+fns_switch_layout() {
+
+  local param="$1"
+
+  if [[ "$param" == "daemon" ]]; then
+    if [ -n "$DISPLAY" ]; then
+      fns_switch_layout_daemon
+    fi
+  else
+    if [[ "$param" != "$(fns_get_current_lng)" ]]; then
+      xdotool key Mode_switch
+    fi
+  fi
+}
+
+fns_switch_layout_daemon() {
+
+  local is_combo_key_us_1=false
+  local is_combo_key_us_2=false
+  local is_combo_key_ru_1=false
+  local is_combo_key_ru_2=false
+
+  local combo_key_us_1_code
+  combo_key_us_1_code=$(fns_get_key_code_by_name "$cfg_combo_key_us_1")
+  local combo_key_us_2_code
+  combo_key_us_2_code=$(fns_get_key_code_by_name "$cfg_combo_key_us_2")
+  local combo_key_ru_1_code
+  combo_key_ru_1_code=$(fns_get_key_code_by_name "$cfg_combo_key_ru_1")
+  local combo_key_ru_2_code
+  combo_key_ru_2_code=$(fns_get_key_code_by_name "$cfg_combo_key_ru_2")
+
+  xinput test "$cfg_keyboard_id" |
+  {
+    while read -r line; do
+
+      if [[ $line =~ ^key[[:space:]]+press[[:space:]]+$combo_key_us_1_code$ ]]; then is_combo_key_us_1=true; fi
+      if [[ $line =~ ^key[[:space:]]+release[[:space:]]+$combo_key_us_1_code$ ]]; then is_combo_key_us_1=false; fi
+
+      if [[ $line =~ ^key[[:space:]]+press[[:space:]]+$combo_key_us_2_code$ ]]; then is_combo_key_us_2=true; fi
+      if [[ $line =~ ^key[[:space:]]+release[[:space:]]+$combo_key_us_2_code$ ]]; then is_combo_key_us_2=false; fi
+
+      if [[ $line =~ ^key[[:space:]]+press[[:space:]]+$combo_key_ru_1_code$ ]]; then is_combo_key_ru_1=true; fi
+      if [[ $line =~ ^key[[:space:]]+release[[:space:]]+$combo_key_ru_1_code$ ]]; then is_combo_key_ru_1=false; fi
+
+      if [[ $line =~ ^key[[:space:]]+press[[:space:]]+$combo_key_ru_2_code$ ]]; then is_combo_key_ru_2=true; fi
+      if [[ $line =~ ^key[[:space:]]+release[[:space:]]+$combo_key_ru_2_code$ ]]; then is_combo_key_ru_2=false; fi
+
+      if [[ "$is_combo_key_us_1" == true && "$is_combo_key_us_2" == true ]]; then
+        fns_switch_layout "us"
+      fi
+
+      if [[ "$is_combo_key_ru_1" == true && "$is_combo_key_ru_2" == true ]]; then
+        fns_switch_layout "ru"
+      fi
+
+    done
+  }
+}
+
+fns_get_divided_string() {
 
   local input_string="$1"
 
-  fns_get_processed_string_result_1=""
-  fns_get_processed_string_result_2=""
+  fns_get_divided_string_result_s1=""
+  fns_get_divided_string_result_s2=""
 
   local string_split=()
   local len=${#input_string}
 
+  local i
   for ((i=len-1; i>=0; i--)); do
     string_split+=("${input_string:$i:1}")
   done
@@ -94,9 +298,14 @@ fns_get_processed_string() {
   local isset_letter=false
   local is_part1=false
 
+  local char
   for char in "${string_split[@]}"; do
     if [[ "$char" != " " ]]; then
       isset_letter=true
+    fi
+
+    if [[ "$isset_letter" == true && "$char" == " " ]]; then
+      is_part1=true
     fi
 
     if [[ "$is_part1" == true ]]; then
@@ -104,112 +313,89 @@ fns_get_processed_string() {
     else
       part2+=("$char")
     fi
-
-    if [[ "$isset_letter" == true && "$char" == " " ]]; then
-      is_part1=true
-    fi
   done
 
   local reversed_part1=()
   local reversed_part2=()
 
+  local i
   for ((i=${#part1[@]}-1; i>=0; i--)); do
     reversed_part1+=("${part1[i]}")
   done
 
+  local i
   for ((i=${#part2[@]}-1; i>=0; i--)); do
     reversed_part2+=("${part2[i]}")
   done
 
+  local char
   for char in "${reversed_part1[@]}"; do
-    fns_get_processed_string_result_1+="$char"
+    fns_get_divided_string_result_s1+="$char"
   done
 
+  local char
   for char in "${reversed_part2[@]}"; do
-    fns_get_processed_string_result_2+="$char"
+    fns_get_divided_string_result_s2+="$char"
   done
 }
 
-fns_switch_last() {
+fns_is_gnome_terminal() {
 
-  local win_class
-  win_class=$(xprop -id "$(xdotool getactivewindow)" WM_CLASS | awk -F '"' '{print $4}')
+    local win_class
+    win_class=$(xprop -id "$(xdotool getactivewindow)" WM_CLASS | awk -F '"' '{print $4}')
 
-  if [[ "$win_class" == "Gnome-terminal" ]]; then
-    fns_switch_last_gnome_terminal
-  else
-    fns_switch_last_common
+    local result=false
+    if [[ "$win_class" == "Gnome-terminal" ]]; then
+      result=true
+    fi
+
+    echo "$result"
+}
+
+fns_get_gnome_terminal_string() {
+
+  local is_selected="$1"
+
+  xte "keydown Control_L" "keydown Shift_L" "key f" "keyup Shift_L" "keyup Control_L"
+  sleep 0.2
+
+  xte "keydown Shift_L" "key Tab" "key Tab" "keyup Shift_L" "key space" "key Tab" "key Tab"
+  echo -n ".*" | xsel -ib
+  xte "keydown Control_L" "key v" "keyup Control_L"
+  sleep 0.2
+  xte "key Return"
+
+  if [[ "$is_selected" == true ]]; then
+    xte "key Tab" "key Tab" "key Return"
   fi
 
-  xdotool key Mode_switch
+  sleep 0.3
+  xte "keydown Alt_L" "key F4" "keyup Alt_L"
+  sleep 0.1
+  xte "keydown Control_L" "keydown Shift_L" "key c" "keyup Shift_L" "keyup Control_L"
+
+  local string
+  string="$(xsel -ob)"
+
+  echo "${string#*":~$ "}"
 }
 
-fns_switch_last_gnome_terminal() {
+fns_paste_to_gnome_terminal() {
+    xte "key End" \
+      "keydown Control_L" "key u" "keyup Control_L" \
+      "keydown Control_L" "keydown Shift_L" "key v" "keyup Shift_L" "keyup Control_L"
+    sleep 0.1
 
-  local saved_clipboard
-  saved_clipboard=$(xsel -ob)
-
-  xte 'keydown Control_L' 'keydown Shift_L' 'key f' 'keyup Shift_L' 'keyup Control_L'
-  sleep 0.2
-
-  echo -n ".*" | xsel -ib
-  xte 'keydown Control_L' 'key v' 'keyup Control_L'
-
-  xte 'key Tab' 'key Tab' 'key Tab' 'key space' 'key Return' 'key Escape'
-  sleep 0.5
-  xte 'keydown Control_L' 'keydown Shift_L' 'key c' 'keyup Shift_L' 'keyup Control_L'
-
-  fns_get_processed_string "$(fns_get_terminal_processed_string "$(xsel -ob)")"
-  echo -n "$fns_get_processed_string_result_1$(fns_convert "$fns_get_processed_string_result_2")" | xsel -ib
-  xte 'keydown Control_L' 'key u' 'keyup Control_L' \
-    'keydown Control_L' 'keydown Shift_L' 'key v' 'keyup Shift_L' 'keyup Control_L'
-  sleep 0.2
-
-  echo -n "$saved_clipboard" | xsel -ib
+    xte "key Right"
 }
 
-fns_switch_last_common() {
-
-  local saved_clipboard
-  saved_clipboard=$(xsel -ob)
-
-  xte 'keydown Shift_L' 'key Home' 'keyup Shift_L'
-  sleep 0.00000001
-  xte 'keydown Shift_L' 'key Home' 'keyup Shift_L'
-  sleep 0.00000001
-  xte 'keydown Control_L' 'key x' 'keyup Control_L'
-  sleep 0.2
-
-  fns_get_processed_string "$(xsel -ob)"
-  echo -n "~$fns_get_processed_string_result_1$(fns_convert "$fns_get_processed_string_result_2")~" | xsel -ib
-  xte 'keydown Control_L' 'key v' 'keyup Control_L'
-  sleep 0.2
-  xte 'key BackSpace'
-  sleep 0.01
-  xte 'key Home'
-  sleep 0.05
-  xte 'key Delete'
-  sleep 0.01
-  xte 'key End'
-  sleep 0.2
-
-  echo -n "$saved_clipboard" | xsel -ib
+fns_get_current_lng() {
+  xset -q | grep "Group 2" | awk '{print $4}' | sed "s/on/ru/g; s/off/us/g"
 }
 
-fns_switch_selected() {
+fns_get_key_code_by_name() {
 
-  local saved_clipboard
-  saved_clipboard=$(xsel -ob)
+  local name="$1"
 
-  sleep 0.2
-  xte 'keydown Control_L' 'key c' 'keyup Control_L'
-  sleep 0.2
-  echo -n "$(fns_convert "$(xsel -ob)")" | xsel -ib
-  sleep 0.2
-  xte 'keydown Control_L' 'key v' 'keyup Control_L'
-  sleep 0.2
-
-  echo -n "$saved_clipboard" | xsel -ib
-
-  xdotool key Mode_switch
+  xmodmap -pke | grep -E "keycode[[:space:]]+[0-9]+[[:space:]]+=[[:space:]]+${name}[[:space:]]" | awk '{print $2}'
 }
