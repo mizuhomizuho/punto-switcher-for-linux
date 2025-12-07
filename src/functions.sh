@@ -250,7 +250,13 @@ fns_switch_layout_daemon() {
   local combo_key_ru_2_code
   combo_key_ru_2_code=$(fns_get_key_code_by_name "$cfg_combo_key_ru_2")
 
-  xinput test "$cfg_keyboard_id" |
+  local keyboard_id
+  keyboard_id=$(xinput list |
+    grep -E "[[:space:]]+${cfg_keyboard_name}[[:space:]]+id=([0-9]+)[[:space:]]+" |
+     grep -o "id=[0-9]\+" |
+      awk -F= '{print $2}')
+
+  xinput test "$keyboard_id" |
   {
     while read -r line; do
 

@@ -149,14 +149,14 @@ fi
 В `switch_layout.sh` нужно указать:
 
 ```bash
-cfg_keyboard_id=14
+cfg_keyboard_name="AT Translated Set 2 keyboard"
 cfg_combo_key_us_1="Super_L"
 cfg_combo_key_us_2="Shift_L"
 cfg_combo_key_ru_1="Super_L"
 cfg_combo_key_ru_2="Control_L"
 ```
 
-Как указать `cfg_keyboard_id` можно почитав "Как посмотреть список устройств ввода?"
+Как указать `cfg_keyboard_name` можно почитав "Как посмотреть список устройств ввода?"
 и "Как посмотреть события нажатия клавиш?" ниже. Если Вы хотите настроить свои сочетания клавиш,
 посмотрите "Как посмотреть коды и названия клавиш?".
 Вообще, я выбрал именно эти сочетания, по разным причинам. У меня эти клавиши находятся рядом.
@@ -391,14 +391,14 @@ But first, you will need to configure the daemon...
 In `switch_layout.sh` you need to specify:
 
 ```bash
-cfg_keyboard_id=14
+cfg_keyboard_name="AT Translated Set 2 keyboard"
 cfg_combo_key_us_1="Super_L"
 cfg_combo_key_us_2="Shift_L"
 cfg_combo_key_ru_1="Super_L"
 cfg_combo_key_ru_2="Control_L"
 ```
 
-You can find out how to set `cfg_keyboard_id` by reading the sections “How to view the list of input devices?”
+You can find out how to set `cfg_keyboard_name` by reading the sections “How to view the list of input devices?”
 and “How to view key press events?” below.
 If you want custom key combos, see “How to view key codes and names?”.
 In general, I chose these combinations for several reasons.
