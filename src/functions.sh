@@ -236,8 +236,6 @@ fns_switch_layout() {
   fi
 }
 
-fns_switch_layout_daemon_to_value=""
-
 fns_switch_layout_daemon() {
 
   local is_combo_key_us_1=false
