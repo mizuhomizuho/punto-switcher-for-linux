@@ -1,4 +1,6 @@
 
+SWITCH_LAYOUT_COMMAND="xdotool key Super+space"
+
 fns_convert() {
 
   local input="$1"
@@ -123,7 +125,7 @@ fns_switch_last() {
   fi
 
   if [[ "$fns_convert_result_switch" == true ]]; then
-    xdotool key Mode_switch
+    eval "$SWITCH_LAYOUT_COMMAND"
   fi
 }
 
@@ -170,7 +172,7 @@ fns_switch_selected() {
   fi
 
   if [[ "$fns_convert_result_switch" == true ]]; then
-    xdotool key Mode_switch
+    eval "$SWITCH_LAYOUT_COMMAND"
   fi
 }
 
@@ -229,10 +231,12 @@ fns_switch_layout() {
     fi
   else
     if [[ "$param" != "$(fns_get_current_lng)" ]]; then
-      xdotool key Mode_switch
+      eval "$SWITCH_LAYOUT_COMMAND"
     fi
   fi
 }
+
+fns_switch_layout_daemon_to_value=""
 
 fns_switch_layout_daemon() {
 
@@ -273,11 +277,22 @@ fns_switch_layout_daemon() {
       if [[ $line =~ ^key[[:space:]]+release[[:space:]]+$combo_key_ru_2_code$ ]]; then is_combo_key_ru_2=false; fi
 
       if [[ "$is_combo_key_us_1" == true && "$is_combo_key_us_2" == true ]]; then
-        fns_switch_layout "us"
+        fns_switch_layout_daemon_to_value="us"
       fi
 
       if [[ "$is_combo_key_ru_1" == true && "$is_combo_key_ru_2" == true ]]; then
-        fns_switch_layout "ru"
+        fns_switch_layout_daemon_to_value="ru"
+      fi
+
+      if [[
+        "$fns_switch_layout_daemon_to_value" != ""
+        && "$is_combo_key_us_1" != true
+        && "$is_combo_key_us_2" != true
+        && "$is_combo_key_ru_1" != true
+        && "$is_combo_key_ru_2" != true
+      ]]; then
+        fns_switch_layout "$fns_switch_layout_daemon_to_value"
+        fns_switch_layout_daemon_to_value=""
       fi
 
     done

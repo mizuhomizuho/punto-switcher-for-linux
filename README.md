@@ -71,6 +71,12 @@ chmod u=rwx,g=rwx,o=rx ./switch_last.sh
 chmod u=rwx,g=rwx,o=rx ./switch_select.sh
 ```
 
+## 2.1) Если нужно, то меняем команду переключения раскладки в `src/functions.sh`. Названия клавиш см. пункт №7:
+
+```bash
+SWITCH_LAYOUT_COMMAND="xdotool key Super+space"
+```
+
 ## 3) Настройка горячих клавиш:
 
 Сочетания клавиш, для работы скриптов, нужно указывать именно через `xbindkeys`.
@@ -136,11 +142,11 @@ xbindkeys
 
 Если хотите использовать сочетания **не модификаторы**, то опять же подойдет `xbindkeys`.
 Просто добавьте те команды через него... `xbindkeys`, как и его аналог `sxhkd`, не работает с модификаторами.
-По этому, если Вы хотите модификаторы, то Вам нужно добавить в `~/.profile` демона:
+По этому, если Вы хотите модификаторы, то Вам нужно добавить в `~/.profile` или автозапуск демона:
 
 ```bash
-if [ -f ~/my_soft_path/punto_switcher/switch_layout.sh ]; then
-    ~/my_soft_path/punto_switcher/switch_layout.sh daemon &
+if [ -f "$HOME/my_soft_path/punto_switcher/switch_layout.sh" ]; then
+    "$HOME/my_soft_path/punto_switcher/switch_layout.sh" daemon &
 fi
 ```
 
@@ -150,17 +156,15 @@ fi
 
 ```bash
 cfg_keyboard_name="AT Translated Set 2 keyboard"
-cfg_combo_key_us_1="Super_L"
+cfg_combo_key_us_1="Control_L"
 cfg_combo_key_us_2="Shift_L"
-cfg_combo_key_ru_1="Super_L"
-cfg_combo_key_ru_2="Control_L"
+cfg_combo_key_ru_1="Alt_L"
+cfg_combo_key_ru_2="Shift_L"
 ```
 
 Как указать `cfg_keyboard_name` можно почитав "Как посмотреть список устройств ввода?"
 и "Как посмотреть события нажатия клавиш?" ниже. Если Вы хотите настроить свои сочетания клавиш,
 посмотрите "Как посмотреть коды и названия клавиш?".
-Вообще, я выбрал именно эти сочетания, по разным причинам. У меня эти клавиши находятся рядом.
-И они, являются единственными свободными сочетаниями-модификаторами, которые больше не используются ни в каких программах.
 
 Установите права на выполнение:
 
@@ -309,6 +313,12 @@ chmod u=rwx,g=rwx,o=rx ./switch_last.sh
 chmod u=rwx,g=rwx,o=rx ./switch_select.sh
 ```
 
+## 2.1) If needed, change the keyboard layout switch command in src/functions.sh. See section #7 for key names:
+
+```bash
+SWITCH_LAYOUT_COMMAND="xdotool key Super+space"
+```
+
 ## 3) Configure hotkeys:
 
 Hotkeys for the scripts must be assigned via `xbindkeys`,
@@ -377,11 +387,11 @@ Replace `~/my_soft_path` with your actual path.
 ### If GUI hotkeys sometimes don’t work:
 
 If you want to use **non-modifier** key combos, again use `xbindkeys`.
-If you need **modifiers**, add a daemon to `~/.profile`:
+Therefore, if you want to use **modifiers**, you need to add them to ~/.profile or to the daemon autostart:
 
 ```bash
-if [ -f ~/my_soft_path/punto_switcher/switch_layout.sh ]; then
-    ~/my_soft_path/punto_switcher/switch_layout.sh daemon &
+if [ -f "$HOME/my_soft_path/punto_switcher/switch_layout.sh" ]; then
+    "$HOME/my_soft_path/punto_switcher/switch_layout.sh" daemon &
 fi
 ```
 
@@ -392,18 +402,15 @@ In `switch_layout.sh` you need to specify:
 
 ```bash
 cfg_keyboard_name="AT Translated Set 2 keyboard"
-cfg_combo_key_us_1="Super_L"
+cfg_combo_key_us_1="Control_L"
 cfg_combo_key_us_2="Shift_L"
-cfg_combo_key_ru_1="Super_L"
-cfg_combo_key_ru_2="Control_L"
+cfg_combo_key_ru_1="Alt_L"
+cfg_combo_key_ru_2="Shift_L"
 ```
 
 You can find out how to set `cfg_keyboard_name` by reading the sections “How to view the list of input devices?”
 and “How to view key press events?” below.
 If you want custom key combos, see “How to view key codes and names?”.
-In general, I chose these combinations for several reasons.
-These keys are located close to each other,
-and they are the only free modifier combinations that aren’t used by any other programs.
 
 Set execution permissions:
 
