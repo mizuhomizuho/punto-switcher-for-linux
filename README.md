@@ -142,12 +142,19 @@ xbindkeys
 
 Если хотите использовать сочетания **не модификаторы**, то опять же подойдет `xbindkeys`.
 Просто добавьте те команды через него... `xbindkeys`, как и его аналог `sxhkd`, не работает с модификаторами.
-По этому, если Вы хотите модификаторы, то Вам нужно добавить в `~/.profile` или автозапуск демона:
+По этому, если Вы хотите модификаторы, то Вам нужно добавить в
+`~/.config/autostart/punto_switcher_for_linux.desktop` (автозапуск) демона:
 
-```bash
-if [ -f "$HOME/my_soft_path/punto_switcher/switch_layout.sh" ]; then
-    "$HOME/my_soft_path/punto_switcher/switch_layout.sh" daemon &
-fi
+```ini
+[Desktop Entry]
+Type=Application
+Exec="$HOME/my_soft_path/punto_switcher/switch_layout.sh" daemon
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
+Hidden=false
+Name[ru_RU]=punto_switcher_for_linux
+Comment[ru_RU]=punto_switcher_for_linux
+X-GNOME-Autostart-Delay=3
 ```
 
 Меняем `~/my_soft_path` на свой путь до папки `punto_switcher`. Но сперва демона нужно будет настроить...
@@ -387,12 +394,19 @@ Replace `~/my_soft_path` with your actual path.
 ### If GUI hotkeys sometimes don’t work:
 
 If you want to use **non-modifier** key combos, again use `xbindkeys`.
-Therefore, if you want to use **modifiers**, you need to add them to ~/.profile or to the daemon autostart:
+Therefore, if you want to use **modifiers**, you need to add them to
+`~/.config/autostart/punto_switcher_for_linux.desktop` or to the daemon autostart:
 
 ```bash
-if [ -f "$HOME/my_soft_path/punto_switcher/switch_layout.sh" ]; then
-    "$HOME/my_soft_path/punto_switcher/switch_layout.sh" daemon &
-fi
+[Desktop Entry]
+Type=Application
+Exec="$HOME/my_soft_path/punto_switcher/switch_layout.sh" daemon
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
+Hidden=false
+Name[ru_RU]=punto_switcher_for_linux
+Comment[ru_RU]=punto_switcher_for_linux
+X-GNOME-Autostart-Delay=3
 ```
 
 Change `~/my_soft_path` to your path to the `punto_switcher` folder.

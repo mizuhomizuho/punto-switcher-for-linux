@@ -289,6 +289,7 @@ fns_switch_layout_daemon() {
         && "$is_combo_key_ru_1" != true
         && "$is_combo_key_ru_2" != true
       ]]; then
+        sleep 0.2
         fns_switch_layout "$fns_switch_layout_daemon_to_value"
         fns_switch_layout_daemon_to_value=""
       fi
