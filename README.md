@@ -397,7 +397,7 @@ If you want to use **non-modifier** key combos, again use `xbindkeys`.
 Therefore, if you want to use **modifiers**, you need to add them to
 `~/.config/autostart/punto_switcher_for_linux.desktop` or to the daemon autostart:
 
-```bash
+```ini
 [Desktop Entry]
 Type=Application
 Exec="$HOME/my_soft_path/punto_switcher/switch_layout.sh" daemon
