@@ -397,7 +397,7 @@ fns_get_gnome_terminal_string() {
   local string
   string="$(xsel -ob)"
 
-  echo "${string#*":~$ "}"
+  echo "${string#*"$ "}"
 }
 
 fns_paste_to_gnome_terminal() {
